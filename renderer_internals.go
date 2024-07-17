@@ -11,6 +11,12 @@ import "github.com/tinne26/etxt/mask"
 func (self *Renderer) getGlyphIndex(font *sfnt.Font, codePoint rune) sfnt.GlyphIndex {
 	index, err := font.GlyphIndex(&self.buffer, codePoint)
 	if err != nil { panic("font.GlyphIndex error: " + err.Error()) }
+
+	if index == 0 {
+		index, err = font.GlyphIndex(&self.buffer, self.missingGlyphRune )
+		if err != nil { panic("font.GlyphIndex error: " + err.Error()) }
+	}
+
 	if index == 0 {
 		msg := "glyph index for '" + string(codePoint) + "' ["
 		msg += runeToUnicodeCode(codePoint) + "] missing"

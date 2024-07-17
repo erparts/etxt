@@ -52,6 +52,7 @@ type Renderer struct {
 	customDrawFn func(Target, sfnt.GlyphIndex, fract.Point)
 	fonts []*sfnt.Font
 	buffer sfnt.Buffer
+	missingGlyphRune rune
 }
 
 // Creates a new [Renderer], initialized with reasonable default values.
@@ -297,4 +298,10 @@ func (self *Renderer) SetCacheHandler(cacheHandler cache.GlyphCacheHandler) {
 // the [sfnt] package and the [sizer.Sizer] interface.
 func (self *Renderer) GetBuffer() *sfnt.Buffer {
 	return &self.buffer
+}
+
+// Sets missing glyph rune, in case that a glyph is missing in the font
+// the given rune will be used. This will avoid panic in case of a missing glyph.
+func (self *Renderer) SetMissingGlyphRune(r rune) {
+	self.missingGlyphRune = r
 }
