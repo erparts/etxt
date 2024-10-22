@@ -2,12 +2,14 @@
 
 package etxt
 
-import "os"
-import "fmt"
-import "image"
-import "image/color"
+import (
+	"fmt"
+	"image"
+	"image/color"
+	"os"
 
-import "github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2"
+)
 
 // --- basic helper functions ---
 
@@ -15,7 +17,12 @@ import "github.com/hajimehoshi/ebiten/v2"
 var vertices [4]ebiten.Vertex
 var stdTriOpts ebiten.DrawTrianglesOptions
 var mask1x1 *ebiten.Image
+
 func init() {
+	if os.Getenv("DISPLAY") == "" {
+		return
+	}
+
 	mask3x3 := ebiten.NewImage(3, 3)
 	mask3x3.Fill(color.RGBA{255, 255, 255, 255})
 	mask1x1 = mask3x3.SubImage(image.Rect(1, 1, 2, 2)).(*ebiten.Image)
@@ -27,7 +34,9 @@ func init() {
 
 func fillOver(target Target, fillColor color.Color) {
 	bounds := target.Bounds()
-	if bounds.Empty() { return }
+	if bounds.Empty() {
+		return
+	}
 
 	minX, minY := float32(bounds.Min.X), float32(bounds.Min.Y)
 	maxX, maxY := float32(bounds.Max.X), float32(bounds.Max.Y)
@@ -36,7 +45,9 @@ func fillOver(target Target, fillColor color.Color) {
 
 func fillOverF32(target Target, fillColor color.Color, minX, minY, maxX, maxY float32) {
 	r, g, b, a := fillColor.RGBA()
-	if a == 0 { return }
+	if a == 0 {
+		return
+	}
 	fr, fg, fb, fa := float32(r)/65535, float32(g)/65535, float32(b)/65535, float32(a)/65535
 	for i := 0; i < 4; i++ {
 		vertices[i].ColorR = fr
@@ -54,7 +65,7 @@ func fillOverF32(target Target, fillColor color.Color, minX, minY, maxX, maxY fl
 	vertices[3].DstX = minX
 	vertices[3].DstY = maxY
 
-	target.DrawTriangles(vertices[0 : 4], []uint16{0, 1, 2, 2, 3, 0}, mask1x1, &stdTriOpts)
+	target.DrawTriangles(vertices[0:4], []uint16{0, 1, 2, 2, 3, 0}, mask1x1, &stdTriOpts)
 }
 
 // ---- shaders ----
@@ -119,17 +130,19 @@ func drawSmoothRect(target *ebiten.Image, minX, minY, maxX, maxY float32, fillCo
 	if rectShader == nil {
 		loadShader(&rectShader, rectShaderSrc)
 		rectShaderOpts.Uniforms = make(map[string]interface{}, 1)
-		rectShaderOpts.Uniforms["Rect"] = []float32{ 0, 0, 0, 0 }
+		rectShaderOpts.Uniforms["Rect"] = []float32{0, 0, 0, 0}
 	}
 
 	// set uniforms
 	slice := rectShaderOpts.Uniforms["Rect"].([]float32)
 	slice[0], slice[1] = minX, minY
 	slice[2], slice[3] = maxX, maxY
-	
+
 	// set vertex colors
 	r, g, b, a := fillColor.RGBA()
-	if a == 0 { return }
+	if a == 0 {
+		return
+	}
 	fr, fg, fb, fa := float32(r)/65535, float32(g)/65535, float32(b)/65535, float32(a)/65535
 	for i := 0; i < 4; i++ {
 		vertices[i].ColorR = fr
@@ -147,14 +160,14 @@ func drawSmoothRect(target *ebiten.Image, minX, minY, maxX, maxY float32, fillCo
 	vertices[3].DstX = minX - 1.0
 	vertices[3].DstY = maxY + 1.0
 
-	target.DrawTrianglesShader(vertices[0 : 4], []uint16{0, 1, 2, 2, 3, 0}, rectShader, &rectShaderOpts)
+	target.DrawTrianglesShader(vertices[0:4], []uint16{0, 1, 2, 2, 3, 0}, rectShader, &rectShaderOpts)
 }
 
 func drawRoundedRect(target *ebiten.Image, minX, minY, maxX, maxY float32, radius float32, fillColor color.Color) {
 	if roundedRectShader == nil {
 		loadShader(&roundedRectShader, roundedRectShaderSrc)
 		roundedRectShaderOpts.Uniforms = make(map[string]interface{}, 2)
-		roundedRectShaderOpts.Uniforms["Rect"] = []float32{ 0, 0, 0, 0 }
+		roundedRectShaderOpts.Uniforms["Rect"] = []float32{0, 0, 0, 0}
 		roundedRectShaderOpts.Uniforms["Radius"] = radius
 	}
 
@@ -163,10 +176,12 @@ func drawRoundedRect(target *ebiten.Image, minX, minY, maxX, maxY float32, radiu
 	slice := roundedRectShaderOpts.Uniforms["Rect"].([]float32)
 	slice[0], slice[1] = minX, minY
 	slice[2], slice[3] = maxX, maxY
-	
+
 	// set vertex colors
 	r, g, b, a := fillColor.RGBA()
-	if a == 0 { return }
+	if a == 0 {
+		return
+	}
 	fr, fg, fb, fa := float32(r)/65535, float32(g)/65535, float32(b)/65535, float32(a)/65535
 	for i := 0; i < 4; i++ {
 		vertices[i].ColorR = fr
@@ -184,5 +199,5 @@ func drawRoundedRect(target *ebiten.Image, minX, minY, maxX, maxY float32, radiu
 	vertices[3].DstX = minX - 1.0
 	vertices[3].DstY = maxY + 1.0
 
-	target.DrawTrianglesShader(vertices[0 : 4], []uint16{0, 1, 2, 2, 3, 0}, roundedRectShader, &roundedRectShaderOpts)
+	target.DrawTrianglesShader(vertices[0:4], []uint16{0, 1, 2, 2, 3, 0}, roundedRectShader, &roundedRectShaderOpts)
 }
